@@ -2,42 +2,50 @@
 #include "semaphoreTask.h"
 //Json 파싱 : RapidJson
 
-
-#define BUF_LEN 128
-const int QSIZE = 3;
+#define QSIZE 3
+const int MAXTIME = 10000;   //10000ms
+const int RANDTIME = 5000;   //5000ms
 
 sem_t semaphore;
 queue<JsonDatas> sockDatas;
 int seque = 0;
 int CREATE_EXIT = false;
 
+int totaltime = 0;
+
 struct sockaddr_in server_addr;
 int SockStat;
+
 
 pthread_mutex_t remutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t recond = PTHREAD_COND_INITIALIZER;
 
-int ConnSocket()
+pthread_cond_t get_cond()
 {
-    char buf[BUF_LEN + 1];
-
-    if((SockStat = sock(PF_INET, SOCK_STREAM, 0)) <= FAIL)
-    {
-        cout << "can't create socket" << endl;
-        return false;
-    }
-    bzero((char *)&server_addr, sizeof(server_addr));
-    server_addr.sin_family = AF_INET;
-    server_addr.sin_addr.s_addr = inet_addr(haddr);
-    server_addr.sin_port = htons(3304);
-    if(connect(SockStat, (struct sockaddr *)&server_addr, sizeof(server_addr)) <= FAIL)
-    {
-        cout << "can't connect." << endl;
-        return false;
-    }
-    cout << "SERVER CONNECT!!" << endl;
-    return true;
+	return recond;
 }
+
+// int ConnSocket()
+// {
+//     char buf[256];
+
+//     if((SockStat = sock(PF_INET, SOCK_STREAM, 0)) <= FAIL)
+//     {
+//         cout << "can't create socket" << endl;
+//         return false;
+//     }
+//     bzero((char *)&server_addr, sizeof(server_addr));
+//     server_addr.sin_family = AF_INET;
+//     server_addr.sin_addr.s_addr = inet_addr(haddr);
+//     server_addr.sin_port = htons(3304);
+//     if(connect(SockStat, (struct sockaddr *)&server_addr, sizeof(server_addr)) <= FAIL)
+//     {
+//         cout << "can't connect." << endl;
+//         return false;
+//     }
+//     cout << "SERVER CONNECT!!" << endl;
+//     return true;
+// }
 
 void print_queue(queue<JsonDatas>& que)
 {
@@ -48,6 +56,12 @@ void print_queue(queue<JsonDatas>& que)
         que.pop();
         cnt++;
     }
+}
+void ClearQueue()
+{
+    //빈 큐와 스왑함으로써 큐의 메모리 해제와 동시에 초기화
+    queue<JsonDatas> emptyque;
+    swap(sockDatas, emptyque);
 }
 
 int num = 2;
@@ -60,14 +74,13 @@ void* THREAD_createstr(void* arg)
     cout << getpid() << endl;
     cout << pthread_self() << endl;
     *mystate = time(NULL) ^ getpid() ^ pthread_self();
-    int totaltime = 0;
     for(int i = 0; i < 3; i++)  //지금은 3번반복이지만 나중에는 무한반복 예정.
     {
-        int rantime = rand_r(mystate)%5 + 1;
+        int rantime = rand_r(mystate) % (RANDTIME - 999);
         cout << "Thread " << n << " sleep time : " << rantime << endl;
-        WAITTIME(rantime*1000); //rantime sec만큼 대기
+        WAITTIME(rantime + 1000); //rantime sec만큼 대기
         sem_wait(&semaphore);
-        WAITTIME(200);    //200ms 대기
+        totaltime += rantime;
         JsonDatas tmpd = {
             .id = ++seque,
             .threadID = pthread_self(),
@@ -76,73 +89,35 @@ void* THREAD_createstr(void* arg)
         };
         sockDatas.push(tmpd);
         cout << "Thread " << n << " create string, size = " << sockDatas.size() << endl;
-        sem_post(&semaphore);
-        totaltime += rantime;
+        if(sockDatas.size() > QSIZE || totaltime >= MAXTIME)
+        {
+            totaltime = 0;
+            pthread_cond_signal(&recond);
+        }
+        else
+        {
+            sem_post(&semaphore);
+        }
     }
     cout << "Thread " << n << " total time : " << totaltime << endl;
     return NULL;
 }
 
-void* THREAD_alarm(void* arg)
-{
-    int itcnt = 0;
-    while(true)
-    {
-        cout << itcnt << "count iterate" << endl;
-        chrono::system_clock::time_point start = chrono::system_clock::now();
-
-        //thread3이 1sleep 후 2sleep을 하고
-        //thread2가 3sleep 하면 +1개가 나오는 일이 발생.
-        //4개가되면 create thread를 전부 wait를 주고 queue를 비운 뒤 다시 broadcast하고 싶으나 시간관계상...
-        while(chrono::duration_cast<std::chrono::milliseconds>(chrono::system_clock::now() - start).count() <= 10000 && 
-        sockDatas.size() <= QSIZE)
-        {
-            if(CREATE_EXIT)
-            {
-                cout << "CREATE THREAD ALL ENDED!!!" << endl;
-                print_queue(sockDatas);
-                pthread_cond_signal(&recond);
-                pthread_mutex_destroy(&remutex);
-                pthread_cond_destroy(&recond);
-                return NULL;
-            }
-        }
-        sem_wait(&semaphore);
-        cout << "while start" << endl;
-        pthread_cond_signal(&recond);
-        while(!sockDatas.empty()){} //sockDatas가 빌떄까지 대기
-        cout << "while end" << endl;
-        sem_post(&semaphore);
-        start = chrono::system_clock::now();
-        itcnt++;
-    }
-
-    return NULL;
-}
-
 void* THREAD_recvdata(void* arg)
 {
-    if(true)
+    while(!CREATE_EXIT)
     {
-        cout << "EXIT" << endl;
-        exit(0);
-    }
-    int tcnt = 0;
-    while(true)
-    {
-        if(tcnt >= 3)
-        {
-            cout << "========= EXIT THREAD =========" << endl;
-            pthread_exit(NULL);
-        }
         cout << "========= !!WAIT START!! =========" << endl;;
         pthread_cond_wait(&recond, &remutex);
         cout << "=========== RECEIVE!!! ===========" << endl;
-        string Jstr = toJSON();
+        queue<JsonDatas> temp = sockDatas;
+        ClearQueue();
+        sem_post(&semaphore);
+        string Jstr = toJSON(&temp);
         cout << Jstr << endl;
-        
-        tcnt++;
     }
+	pthread_mutex_destroy(&remutex);
+	pthread_cond_destroy(&recond);
     return NULL;
 }
 
@@ -184,29 +159,27 @@ string get_curtime()    //<string>, <ctime> 헤더파일 필요
     return curday;
 }
 
-string toJSON()
+string toJSON(queue<JsonDatas>* sockDatas)
 {
     string JsonStr = "[";
     const int append = 0;
     const int start = 1;
     const int end = 2;
-    while(true)
+    while(!sockDatas->empty())
     {
         string idname = "seqid";
-        string tmp = strtoJson(idname, to_string(sockDatas.front().id), true, start);
+        string tmp = strtoJson(idname, to_string(sockDatas->front().id), true, start);
         JsonStr.append(tmp);
-        tmp = strtoJson("threadID", to_string(sockDatas.front().threadID), true, append);
+        tmp = strtoJson("threadID", to_string(sockDatas->front().threadID), true, append);
         JsonStr.append(tmp);
-        tmp = strtoJson("randomstr", sockDatas.front().randomstr, false, append);
+        tmp = strtoJson("randomstr", sockDatas->front().randomstr, false, append);
         JsonStr.append(tmp);
-        tmp = strtoJson("timestamp", sockDatas.front().timestamp, false, end);
+        tmp = strtoJson("timestamp", sockDatas->front().timestamp, false, end);
         JsonStr.append(tmp);
-        sockDatas.pop();
-        if(sockDatas.empty())
-            break;
-        else
-            JsonStr.append(", ");
+        JsonStr.append(", ");
+        sockDatas->pop();
     }
+	JsonStr.erase(JsonStr.length()-2, 2);
     JsonStr.append("]");
     return JsonStr;
 }

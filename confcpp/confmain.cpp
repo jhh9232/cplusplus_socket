@@ -3,17 +3,11 @@
 int main()
 {
     sockDatas.push({0, 0, "tmp", ""});
-    pthread_t sendth, recvth;
+    pthread_t recvth;
     int rchk = pthread_create(&recvth, NULL, THREAD_recvdata, NULL);
-    int gchk = pthread_create(&sendth, NULL, THREAD_alarm, NULL);
     if(rchk < 0)
     {
         perror("recv thread error\n");
-    }
-    if(gchk < 0)
-    {
-        perror("send thread error\n");
-        return 0;
     }
     string fileName = "./config.conf";
     string sectionName = "thread count";
@@ -33,7 +27,7 @@ int main()
         facs.push_back((unsigned int)tn);
     }
 
-    sem_init(&semaphore, 0, 1); //return :: 0 -> success, others -> fail
+    sem_init(&semaphore, 0, 1); //return : 0 -> success, others -> fail
 
     cout << "Semaphore test Start!" << endl;
     //스레드 생성
@@ -42,15 +36,16 @@ int main()
 
     //스레드 조인
     for(int i=0; i < tsize; i++)
-        pthread_join(threads[i], NULL);
-    
-    CREATE_EXIT = true;
+	    pthread_join(threads[i], NULL);
 
-    cout << "All Thread ended" << endl;
+	
+	CREATE_EXIT = true;
 
-    sem_destroy(&semaphore);
+	cout << "All Thread ended" << endl;
 
-    pthread_join(sendth, NULL);
+	sem_destroy(&semaphore);
 
-    return 0;
+	pthread_join(recvth, NULL);	//pthreadjoin의 무한대기 해결
+
+	return 0;
 }

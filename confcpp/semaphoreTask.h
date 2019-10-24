@@ -25,19 +25,21 @@ extern sem_t semaphore;
 extern queue<JsonDatas> sockDatas;
 extern int seque;
 extern int CREATE_EXIT;
+extern int totaltime;
 
 extern struct sockaddr_in server_addr;
 extern int SockStat;
 
 void print_queue(queue<string>&);
+void ClearQueue();
+pthread_cond_t get_cond();
 
 void* THREAD_createstr(void*);
-void* THREAD_alarm(void*);
 void* THREAD_recvdata(void *);
 
 string createString(unsigned int *);
 string get_curtime();
-string toJSON();
+string toJSON(queue<JsonDatas>*);
 string strtoJson(string, string, int, int);
 string appJson(string, string, int);
 

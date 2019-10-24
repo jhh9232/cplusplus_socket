@@ -10,17 +10,16 @@ Config::Config()
 }
 Config::~Config()
 {
-    cout << "destroy Config" << endl;
     fclose(fp);
 }
 void Config::Split(char *data)
 {
     char *sp, *ep; 
     memset(key, 0x00, 80);
-    memset(value, 0x00, 256);
+    memset(value, 0x00, BUF_LEN);
     sp = strstr(data, "=");
     ep = strstr(data, "\n");    //마지막줄에 \n이 없으면 세그멘테이션오류 발생
-    if(ep == NULL)  //세그먼테이션 오류 해결
+    if(ep == NULL)              //세그먼테이션 오류 해결
     {
         ep = strstr(data, "=");
         while(*ep != null)
@@ -46,9 +45,9 @@ int Config::findSection(string Section)
     rewind(fp); //fp포인터를 파일의 시작점으로 옮김.
     string SectionName;
     SectionName = "["+Section+"]";
-    char buf[256];
+    char buf[BUF_LEN];
     int rtv = 0;
-    while(fgets(buf, 255, fp))
+    while(fgets(buf, BUF_LEN-1, fp))
     {
         //buf안에 [SectionName]이 포함되어 있으면 fp포인터를 [SectionName]에 위치시키고 반복문 종료
         if (strncmp(SectionName.c_str(), buf, SectionName.length()) == 0)
@@ -64,11 +63,11 @@ int Config::findSection(string Section)
 char* Config::nextItem()
 {
     //fp는 검색된 section의 위치부터 시작
-    char buf[256];
+    char buf[BUF_LEN];
     while(1)
     {
         //데이터가 없으면 NULL 반환
-        if(fgets(buf, 255, fp) == NULL)
+        if(fgets(buf, BUF_LEN-1, fp) == NULL)
             return NULL;
         //conf파일이 주석이 아니면
         if(buf[0] != '#')
@@ -83,41 +82,36 @@ char* Config::nextItem()
     Split(buf);
     return key;
 }
-char* Config::getValue(string Section, const char *Name)
+char* Config::getValue(string Section, const char *KeyName)
 {
     rewind(fp); //fp포인터를 파일의 시작점으로 옮김.
-    char buf[256];
-    int NameLen = strlen(Name);
+    char buf[BUF_LEN];
+    int NameLen = strlen(KeyName);
     string SectionName;
     SectionName = "["+Section+"]";
-    section_find = 0;
     value[0] = null;
-    while(fgets(buf, 255, fp))
+    section_find = false;
+    while(fgets(buf, BUF_LEN-1, fp))
     {
         if (buf[0] == '#')
             continue;
 
-        if (section_find == 1)
-        {
-            //다른 섹션으로 넘어가면 NULL Return
-            if(buf[0] == NEXTSECTION)
-                return NULL;
-            if(strncmp(buf, Name, NameLen) == 0)
-            {
-                //printf("%s", buf);
-                Split(buf);
-                //*Name을 포함하는 것이 아닌 *Name과 일치하는 key값을 찾음.
-                //strlen(key) == strlen(Name) 도 됨.
-                if(strncmp(key, Name, strlen(key)) == 0)
-                    return value;
-            }
-        }
-        else if (strncmp(SectionName.c_str(), buf, Section.length()+2) == 0)
+        if (!strncmp(SectionName.c_str(), buf, Section.length()+2))
         {
             //printf("Find\n");
             last_seek = ftell(fp);
             //printf("Last_seek %d\n", last_seek);
-            section_find = 1;
+            section_find = true;
+        }
+        else if(!strncmp(buf, KeyName, NameLen) && buf[NameLen] == '=')
+        {
+            //printf("%s", buf);
+            Split(buf);
+            return value;
+        }
+        else if(section_find && buf[0] == '[')
+        {
+            return NULL;
         }
     }
     return NULL;
@@ -127,7 +121,7 @@ char* Config::getValue(string Section, const char *Name)
 int get_valueNUM(string fileName, string sectionName, string keyName)
 {
     Config *agentCfg = new Config();
-    if (agentCfg->openCfg(fileName.c_str()) == -1)
+    if (agentCfg->openCfg(fileName.c_str()) == false)
     {
         perror("Error");    //error출력
 

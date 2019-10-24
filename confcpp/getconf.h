@@ -5,6 +5,7 @@
 #include <sys/types.h>
 
 #define NEXTSECTION '['
+#define BUF_LEN 256
 
 class Config
 {
@@ -14,7 +15,7 @@ private:
     string last_section;
     int section_find;
     char key[80];
-    char value[256];
+    char value[BUF_LEN];
 public: 
     Config(); 
     ~Config();
@@ -22,11 +23,11 @@ public:
     // 설정파일을 open 한다. 
     int openCfg(const char *fname)
     {
-        //설정파일이 있으면 true, 없으면 -1 반환
+        //설정파일이 있으면 true, 없으면 false 반환
         fp = fopen(fname, "r");
         if (fp == NULL)
-            return -1;
-        return 1;
+            return false;
+        return true;
     }
 
     // 주어진 문자열을 Key와 Value로 나눈다. 
