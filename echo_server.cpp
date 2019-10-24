@@ -108,3 +108,5 @@ int main(int argc, char* argv[])
     close(server_fd);
     return 0;
 }
+
+//g++ -std=c++17 -g -o echo_server.exe echo_server.cpp

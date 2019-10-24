@@ -3,9 +3,6 @@
 #include <time.h>
 #include <vector>
 #include <algorithm>
-#include <boost/config.hpp>
-#include <boost/program_options/detail/config_file.hpp>
-#include <boost/program_options/parsers.hpp>
 
 using namespace std;
 

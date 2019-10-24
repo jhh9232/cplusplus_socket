@@ -1,72 +1,5 @@
-#include <pthread.h>
-#include <semaphore.h>
-#include <iostream>
-#include <stdlib.h>
-#include <time.h>
-#include <vector>
-#include <queue>
-#include <string>
-#include>
-//Json 파싱 : RapidJson
-
-using namespace std;
-
-#define EMPTY 0
-
-typedef struct ThreadData{
-    string id;
-    int threadID;
-    string randomstr;
-    string timestamp;
-}JsonDatas;
-
-sem_t semaphore;
-
-int num = 2;
-
-void* threadF(void* arg)
-{
-    int i;
-    int n = *(int *)arg;
-    cout << "n : " << n << endl;
-    if(num != 0)
-    {
-        num--;
-        sem_wait(&semaphore);
-        cout << "Thread " << n << " starts using the toilet." << endl;
-        
-        //화장실을 이용하는 시간이라 가정
-        int j = 0;
-        for(int i=0;i<1000000;i++){
-            srand(time(NULL));
-            j = rand() % 10;
-        }
-        cout << "Thread " << n << " has finished using the toilet." << endl;
-        num++;
-        sem_post(&semaphore);
-    }
-    else if(num == 0)
-    {
-        cout << "The bathroom is full and Thread 1 is waiting." << endl;
-        while(num == 0){}
-        num--;
-        sem_wait(&semaphore);
-        cout << "Thread " << n << " starts using the toilet." << endl;
-        int j = 0;
-        for(int i=0;i<1000000;i++){
-            srand(time(NULL));
-            j = rand() % 10;
-        }
-        cout << "Thread " << n << " has finished using the toilet." << endl;
-        num++;
-        sem_post(&semaphore);
-    }
-    cout << "num : " << num << endl;
-    return NULL;
-}
-
-int main()
-{
+/*
+int main(){
     vector<pthread_t> threads;
     threads.push_back(EMPTY);
     threads.push_back(EMPTY);
@@ -94,9 +27,9 @@ int main()
     cout << "All Thread used the toilet!" << endl;
 
     sem_destroy(&semaphore);
-
     return 0;
 }
+*/
 
 /*
 

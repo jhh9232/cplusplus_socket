@@ -17,69 +17,73 @@ using namespace std;
 
 //https://disclosure.tistory.com/entry/%EC%8B%AC%ED%94%8C%ED%95%9C-1-1-%EC%B1%84%ED%8C%85-%ED%94%84%EB%A1%9C%EA%B7%B8%EB%9E%A8-%ED%81%B4%EB%9D%BC%EC%9D%B4%EC%96%B8%ED%8A%B8?category=516221
 
-int main(int argc, char* argv[])
-{
-    int s, n;
-    char* haddr;
-    struct sockaddr_in server_addr;
-    //struct sockaddr_in server_addr : ì„œë²„ì˜ ì†Œì¼“ì£¼ì†Œ êµ¬ì¡°ì²´
-    char buf[BUF_LEN + 1];
-    
-    if(argc != 2)
-    {
-        printf("useage : %s ip_Address\n", argv[0]);
-        exit(0);
-    }
-    haddr = argv[1];
+int SockStat;
+struct sockaddr_in server_addr;
+//struct sockaddr_in server_addr : ¼­¹öÀÇ ¼ÒÄÏÁÖ¼Ò ±¸Á¶Ã¼
 
-    if((s = socket(PF_INET, SOCK_STREAM, 0)) <= Fail)
-    {//ì†Œì¼“ ìƒì„±ê³¼ ë™ì‹œì— ì†Œì¼“ ìƒì„± ìœ íš¨ê²€ì‚¬
+
+int ConnectSock()
+{
+    char buf[BUF_LEN + 1];
+    char* ip = "127.0.0.1";
+    /* socket() : TCP ¼ÒÄÏ »ı¼º */
+    if((SockStat = socket(PF_INET, SOCK_STREAM, 0)) <= Fail)
+    {
         cout << "can't create socket" <<endl;
-        exit(0);
+        return false;
     }
-    //ì„œë²„ì˜ ì†Œì¼“ì£¼ì†Œ êµ¬ì¡°ì²´ server_addrì„ NULLë¡œ ì´ˆê¸°í™”
+    //¼­¹öÀÇ ¼ÒÄÏÁÖ¼Ò ±¸Á¶Ã¼ server_addrÀ» NULL·Î ÃÊ±âÈ­
     bzero((char*)&server_addr, sizeof(server_addr));
 
-    //ì£¼ì†Œ ì²´ê³„ë¥¼ AF_INETë¡œ ì„ íƒ
+    //ÁÖ¼Ò Ã¼°è¸¦ AF_INET ·Î ¼±ÅÃ
     server_addr.sin_family = AF_INET;
 
-    //32ë¹„íŠ¸ IPì£¼ì†Œë¡œ ë³€í™˜
-    server_addr.sin_addr.s_addr = inet_addr(argv[1]);
+    //32ºñÆ®ÀÇ IPÁÖ¼Ò·Î º¯È¯
+    server_addr.sin_addr.s_addr = inet_addr(ip);
 
-    //daytime ì„œë¹„ìŠ¤ í¬íŠ¸ë²ˆí˜¸
+    //daytime ¼­ºñ½º Æ÷Æ® ¹øÈ£
     server_addr.sin_port = htons(12345);
 
-    if(connect (s, (struct sockaddr *)&server_addr, sizeof(server_addr)) <= Fail)
-    {//ì„œë²„ë¡œ ì—°ê²° ìš”ì²­
+    if(connect (SockStat, (struct sockaddr *)&server_addr, sizeof(server_addr)) <= Fail)
+    {//¼­¹ö·Î ¿¬°á¿äÃ»
         cout << "can't connect." << endl;
-        exit(0);
+        return false;
     }
     cout << "SERVER CONNECT!!" << endl;
+    return true;
+}
+
+int main(int argc, char* argv[])
+{
+    if(ConnectSock() == false)
+    {
+        return 0;
+    }
     while(true)
     {
-        /* ì…ë ¥ ë°›ì„ ë²„í¼ ìƒì„±  */
+        /* ÀÔ·Â ¹ŞÀ» ¹öÆÛ »ı¼º  */
         char message[BUF_LEN];
         memset(message,0,strlen(message));
 
-        /* ì‚¬ìš©ìë¡œë¶€í„° ì…ë ¥ ë°›ìŒ */
+        /* »ç¿ëÀÚ·ÎºÎÅÍ ÀÔ·Â ¹ŞÀ½ */
         printf("Client : ");
         fgets(message,BUF_LEN,stdin);
         message[strlen(message)-1] = '\0';
 
-        /* ì…ë ¥ ë°›ì€ ë¬¸ì ì„¼ë“œ */
+        /* ÀÔ·Â ¹ŞÀº ¹®ÀÚ ¼¾µå */
         size_t echoStringLen = strlen(message);
-        ssize_t numBytes = send (s,message, echoStringLen, 0);
+        ssize_t numBytes = send (SockStat,message, echoStringLen, 0);
         if (numBytes == Fail)
             cout << "send error" << endl;
         
-        /* ì„œë²„ì¸¡ìœ¼ë¡œë¶€í„° ë¦¬ì‹œë¸Œ  */
+        /* ¼­¹öÃøÀ¸·ÎºÎÅÍ ¸®½Ãºê  */
         char buffer[BUF_LEN];
         memset(buffer,0,sizeof(buffer));
-        numBytes = recv(s,buffer,BUF_LEN,0);
+        numBytes = recv(SockStat,buffer,BUF_LEN,0);
         if(numBytes == -1 )
             cout << "receive error" << endl;
         
-        
+        /* ÀÔ·Â ¹ŞÀº ¹®ÀÚ°¡ /quit ÀÏ °æ¿ì ºê·¹ÀÌÅ© */
         if(!strcmp(buffer,"/q"))
             break; 
 
@@ -87,7 +91,8 @@ int main(int argc, char* argv[])
         printf("from %s server : %s\n",inet_ntoa(server_addr.sin_addr),buffer);
         memset(buffer,0,sizeof(buffer));
     }
-    close(s);
+    close(SockStat);
     printf("Close");
     return 0;
 }
+//g++ -std=c++17 -g -o echo_client.exe echo_client.cpp
