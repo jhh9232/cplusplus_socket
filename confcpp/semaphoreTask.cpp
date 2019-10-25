@@ -20,9 +20,9 @@ int SockStat;
 pthread_mutex_t remutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t recond = PTHREAD_COND_INITIALIZER;
 
-pthread_cond_t get_cond()
+pthread_cond_t* get_cond()
 {
-	return recond;
+	return &recond;
 }
 
 // int ConnSocket()
@@ -92,12 +92,14 @@ void* THREAD_createstr(void* arg)
         if(sockDatas.size() > QSIZE || totaltime >= MAXTIME)
         {
             totaltime = 0;
+			cout << &recond << endl;
             pthread_cond_signal(&recond);
         }
         else
         {
             sem_post(&semaphore);
         }
+		WAITTIME(200);
     }
     cout << "Thread " << n << " total time : " << totaltime << endl;
     return NULL;

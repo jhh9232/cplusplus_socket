@@ -32,7 +32,7 @@ extern int SockStat;
 
 void print_queue(queue<string>&);
 void ClearQueue();
-pthread_cond_t get_cond();
+pthread_cond_t* get_cond();
 
 void* THREAD_createstr(void*);
 void* THREAD_recvdata(void *);

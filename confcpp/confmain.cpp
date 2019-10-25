@@ -45,6 +45,11 @@ int main()
 
 	sem_destroy(&semaphore);
 
+	
+	pthread_cond_t *recond = get_cond();
+	cout << recond << endl;
+	pthread_cond_signal(recond);
+
 	pthread_join(recvth, NULL);	//pthreadjoin의 무한대기 해결
 
 	return 0;
