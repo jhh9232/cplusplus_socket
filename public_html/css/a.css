@@ -1,0 +1,23 @@
+.askin{
+    display: inline-block;
+    width: 24px;
+    height: 24px;
+    margin: 0 2px;
+    box-sizing: border-box;
+    line-height: 24px;
+    font-family: arial, sans-serif;
+    text-align: center;
+}
+.ared{
+    text-decoration: none;
+    color: #e70404;
+}
+.on{
+    border: solid 1px;
+    background-color: #fff;
+    border-color: #e70404;
+}
+.ablue{
+    text-decoration: none;
+    color: #042ee7;
+}
