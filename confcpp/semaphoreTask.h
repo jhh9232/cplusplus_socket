@@ -6,14 +6,10 @@
 #include <vector>
 #include <queue>
 
-//socket Library
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <arpa/inet.h>
-
 typedef struct ThreadData JsonDatas;
 
-struct ThreadData{
+struct ThreadData
+{
     int id;
     long unsigned int threadID;
     string randomstr;

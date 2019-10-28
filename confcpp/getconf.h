@@ -5,7 +5,6 @@
 #include <sys/types.h>
 
 #define NEXTSECTION '['
-#define BUF_LEN 256
 
 class Config
 {
@@ -20,43 +19,43 @@ public:
     Config(); 
     ~Config();
 
-    // ¼³Á¤ÆÄÀÏÀ» open ÇÑ´Ù. 
+    // ì„¤ì •íŒŒì¼ì„ open í•œë‹¤. 
     int openCfg(const char *fname)
     {
-        //¼³Á¤ÆÄÀÏÀÌ ÀÖÀ¸¸é true, ¾øÀ¸¸é false ¹İÈ¯
+        //ì„¤ì •íŒŒì¼ì´ ìˆìœ¼ë©´ true, ì—†ìœ¼ë©´ false ë°˜í™˜
         fp = fopen(fname, "r");
         if (fp == NULL)
             return false;
         return true;
     }
 
-    // ÁÖ¾îÁø ¹®ÀÚ¿­À» Key¿Í Value·Î ³ª´«´Ù. 
+    // ì£¼ì–´ì§„ ë¬¸ìì—´ì„ Keyì™€ Valueë¡œ ë‚˜ëˆˆë‹¤. 
     void Split(char *);
 
-    // sectionÀÌ Á¸ÀçÇÏ´ÂÁö °Ë»çÇÑ´Ù. 
+    // sectionì´ ì¡´ì¬í•˜ëŠ”ì§€ ê²€ì‚¬í•œë‹¤. 
     int findSection(string Section);
 
-    // fineSectionÀ¸·Î °Ë»öµÈ »ö¼ÇÀÇ ¾ÆÀÌÅÛ ¸ñ·ÏÀ» ¾ò¾î¿Â´Ù. 
-    // ¾ò¾î¿Â ¾ÆÀÌÅÛ¿¡¼­ Key,Value¸¦ ¾ò¾î¿Â´Ù. 
+    // fineSectionìœ¼ë¡œ ê²€ìƒ‰ëœ ìƒ‰ì…˜ì˜ ì•„ì´í…œ ëª©ë¡ì„ ì–»ì–´ì˜¨ë‹¤. 
+    // ì–»ì–´ì˜¨ ì•„ì´í…œì—ì„œ Key,Valueë¥¼ ì–»ì–´ì˜¨ë‹¤. 
     char* nextItem();
 
-    // section°ú, key¸¦ ÀÌ¿ëÇØ¼­ value¸¦ ¾ò¾î¿Â´Ù. 
+    // sectionê³¼, keyë¥¼ ì´ìš©í•´ì„œ valueë¥¼ ì–»ì–´ì˜¨ë‹¤. 
     char* getValue(string Section, const char *Name);
 
-    // Value¸¦ ¾ò¾î¿Â´Ù. 
+    // Valueë¥¼ ì–»ì–´ì˜¨ë‹¤. 
     char* getValue()
     {
         return value;
     }
 
-    // Key¸¦ ¾ò¾î¿Â´Ù. 
+    // Keyë¥¼ ì–»ì–´ì˜¨ë‹¤. 
     char* getKey()
     {
         return key;
     }
 };
 
-//À­ Å¬·¡½ºµéÀ» »ç¿ëÇÏ¿© sectionNameÀÇ keyNameÀÇ value¸¦ ¼ıÀÚ·Î º¯È¯ÇÏ¿© ¸®ÅÏ
+//ìœ— í´ë˜ìŠ¤ë“¤ì„ ì‚¬ìš©í•˜ì—¬ sectionNameì˜ keyNameì˜ valueë¥¼ ìˆ«ìë¡œ ë³€í™˜í•˜ì—¬ ë¦¬í„´
 int get_valueNUM(string fileName, string sectionName, string keyName);
 
 #endif

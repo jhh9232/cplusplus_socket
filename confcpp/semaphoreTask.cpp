@@ -1,14 +1,18 @@
 #include "common.h"
 #include "semaphoreTask.h"
-//Json ÆÄ½Ì : RapidJson
+#include "httppost.h"
+//Json íŒŒì‹± : RapidJson
 
-#define QSIZE 3
-const int MAXTIME = 10000;   //10000ms
-const int RANDTIME = 5000;   //5000ms
+#define QSIZE 100
+const int MAXTIME = 90000;   //90000ms -> 90sec
+
+
+const int RANDTIME = 10000;   //5000ms
 
 sem_t semaphore;
 queue<JsonDatas> sockDatas;
 int seque = 0;
+
 int CREATE_EXIT = false;
 
 int totaltime = 0;
@@ -25,28 +29,6 @@ pthread_cond_t* get_cond()
 	return &recond;
 }
 
-// int ConnSocket()
-// {
-//     char buf[256];
-
-//     if((SockStat = sock(PF_INET, SOCK_STREAM, 0)) <= FAIL)
-//     {
-//         cout << "can't create socket" << endl;
-//         return false;
-//     }
-//     bzero((char *)&server_addr, sizeof(server_addr));
-//     server_addr.sin_family = AF_INET;
-//     server_addr.sin_addr.s_addr = inet_addr(haddr);
-//     server_addr.sin_port = htons(3304);
-//     if(connect(SockStat, (struct sockaddr *)&server_addr, sizeof(server_addr)) <= FAIL)
-//     {
-//         cout << "can't connect." << endl;
-//         return false;
-//     }
-//     cout << "SERVER CONNECT!!" << endl;
-//     return true;
-// }
-
 void print_queue(queue<JsonDatas>& que)
 {
     int cnt = 1;
@@ -59,7 +41,7 @@ void print_queue(queue<JsonDatas>& que)
 }
 void ClearQueue()
 {
-    //ºó Å¥¿Í ½º¿ÒÇÔÀ¸·Î½á Å¥ÀÇ ¸Ş¸ğ¸® ÇØÁ¦¿Í µ¿½Ã¿¡ ÃÊ±âÈ­
+    //ë¹ˆ íì™€ ìŠ¤ì™‘í•¨ìœ¼ë¡œì¨ íì˜ ë©”ëª¨ë¦¬ í•´ì œì™€ ë™ì‹œì— ì´ˆê¸°í™”
     queue<JsonDatas> emptyque;
     swap(sockDatas, emptyque);
 }
@@ -74,12 +56,14 @@ void* THREAD_createstr(void* arg)
     cout << getpid() << endl;
     cout << pthread_self() << endl;
     *mystate = time(NULL) ^ getpid() ^ pthread_self();
-    for(int i = 0; i < 3; i++)  //Áö±İÀº 3¹ø¹İº¹ÀÌÁö¸¸ ³ªÁß¿¡´Â ¹«ÇÑ¹İº¹ ¿¹Á¤.
+    for(int i = 0; true; i++)  //ì§€ê¸ˆì€ 3ë²ˆë°˜ë³µì´ì§€ë§Œ ë‚˜ì¤‘ì—ëŠ” ë¬´í•œë°˜ë³µ ì˜ˆì •.
     {
-        int rantime = rand_r(mystate) % (RANDTIME - 999);
+        int rantime = rand_r(mystate) % (RANDTIME - 999);	//0~9000ì´ˆê¹Œì§€
         cout << "Thread " << n << " sleep time : " << rantime << endl;
-        WAITTIME(rantime + 1000); //rantime sec¸¸Å­ ´ë±â
-        sem_wait(&semaphore);
+        WAITTIME(rantime + 1000); //rantime secë§Œí¼ ëŒ€ê¸°
+		sem_wait(&semaphore);
+		
+        //LOCK
         totaltime += rantime;
         JsonDatas tmpd = {
             .id = ++seque,
@@ -92,13 +76,14 @@ void* THREAD_createstr(void* arg)
         if(sockDatas.size() > QSIZE || totaltime >= MAXTIME)
         {
             totaltime = 0;
-			cout << &recond << endl;
             pthread_cond_signal(&recond);
         }
         else
         {
             sem_post(&semaphore);
         }
+		//LOCK
+
 		WAITTIME(200);
     }
     cout << "Thread " << n << " total time : " << totaltime << endl;
@@ -117,6 +102,7 @@ void* THREAD_recvdata(void* arg)
         sem_post(&semaphore);
         string Jstr = toJSON(&temp);
         cout << Jstr << endl;
+		PostData("10.0.0.95", "/postdata.php", Jstr.c_str());
     }
 	pthread_mutex_destroy(&remutex);
 	pthread_cond_destroy(&recond);
@@ -131,11 +117,11 @@ string createString(unsigned int* randstate)
     {
         char numstr = null;
         int bigsmall = rand_r(randstate)%2;
-        if(bigsmall == 0)   //´ë¹®ÀÚ
+        if(bigsmall == 0)   //ëŒ€ë¬¸ì
         {
             numstr = rand_r(randstate)%26+65;
         }
-        else    //¼Ò¹®ÀÚ
+        else    //ì†Œë¬¸ì
         {
             numstr = rand_r(randstate)%26+97;
         }
@@ -145,13 +131,13 @@ string createString(unsigned int* randstate)
     return res;
 }
 
-string get_curtime()    //<string>, <ctime> Çì´õÆÄÀÏ ÇÊ¿ä
+string get_curtime()    //<string>, <ctime> í—¤ë”íŒŒì¼ í•„ìš”
 {
     time_t curr_time;
     struct tm* curr_tm;
 
     curr_time = time(NULL);
-    curr_tm = localtime(&curr_time);\
+    curr_tm = localtime(&curr_time);
 
     string curday = to_string(curr_tm->tm_year + 1900) + "-" + to_string(curr_tm->tm_mon + 1) + "-" + to_string(curr_tm->tm_mday) + " ";
     string curtime = to_string(curr_tm->tm_hour) + ":" + to_string(curr_tm->tm_min) + ":" + to_string(curr_tm->tm_sec);
@@ -186,7 +172,7 @@ string toJSON(queue<JsonDatas>* sockDatas)
     return JsonStr;
 }
 
-//±âÁ¸ JsonStr, key, value, Á¤¼ö?¹®ÀÚ?, ½ÃÀÛ{, Ãß°¡, ³¡}
+//ê¸°ì¡´ JsonStr, key, value, ì •ìˆ˜?ë¬¸ì?, ì‹œì‘{, ì¶”ê°€, ë}
 string strtoJson(string key, string value, int isint,  int status)
 {
     string JsonStr = "";

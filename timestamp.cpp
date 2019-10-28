@@ -4,7 +4,7 @@
 
 using namespace std;
 
-string get_curtime()    //<string>, <ctime> Çì´õÆÄÀÏ ÇÊ¿ä
+string get_curtime()    //<string>, <ctime> í—¤ë”íŒŒì¼ í•„ìš”
 {
     time_t curr_time;
     struct tm* curr_tm;

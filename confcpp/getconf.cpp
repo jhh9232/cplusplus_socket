@@ -18,8 +18,8 @@ void Config::Split(char *data)
     memset(key, 0x00, 80);
     memset(value, 0x00, BUF_LEN);
     sp = strstr(data, "=");
-    ep = strstr(data, "\n");    //¸¶Áö¸·ÁÙ¿¡ \nÀÌ ¾øÀ¸¸é ¼¼±×¸àÅ×ÀÌ¼Ç¿À·ù ¹ß»ý
-    if(ep == NULL)              //¼¼±×¸ÕÅ×ÀÌ¼Ç ¿À·ù ÇØ°á
+    ep = strstr(data, "\n");    //ë§ˆì§€ë§‰ì¤„ì— \nì´ ì—†ìœ¼ë©´ ì„¸ê·¸ë©˜í…Œì´ì…˜ì˜¤ë¥˜ ë°œìƒ
+    if(ep == NULL)              //ì„¸ê·¸ë¨¼í…Œì´ì…˜ ì˜¤ë¥˜ í•´ê²°
     {
         ep = strstr(data, "=");
         while(*ep != null)
@@ -27,13 +27,13 @@ void Config::Split(char *data)
             ep++;
         }
     }
-    //keyÃßÃâ
+    //keyì¶”ì¶œ
     memcpy(key, data, sp-data);
     key[sp-data+1] = null;
     // memcpy(value, sp+1, (ep-sp));
     // key[sp-data+1] = null;
 
-    //valueÃßÃâ
+    //valueì¶”ì¶œ
     memcpy(value, sp+1, (ep-sp));
     value[ep-sp-1] = null;
 
@@ -42,14 +42,14 @@ void Config::Split(char *data)
 }
 int Config::findSection(string Section)
 {
-    rewind(fp); //fpÆ÷ÀÎÅÍ¸¦ ÆÄÀÏÀÇ ½ÃÀÛÁ¡À¸·Î ¿Å±è.
+    rewind(fp); //fpí¬ì¸í„°ë¥¼ íŒŒì¼ì˜ ì‹œìž‘ì ìœ¼ë¡œ ì˜®ê¹€.
     string SectionName;
     SectionName = "["+Section+"]";
     char buf[BUF_LEN];
     int rtv = 0;
     while(fgets(buf, BUF_LEN-1, fp))
     {
-        //buf¾È¿¡ [SectionName]ÀÌ Æ÷ÇÔµÇ¾î ÀÖÀ¸¸é fpÆ÷ÀÎÅÍ¸¦ [SectionName]¿¡ À§Ä¡½ÃÅ°°í ¹Ýº¹¹® Á¾·á
+        //bufì•ˆì— [SectionName]ì´ í¬í•¨ë˜ì–´ ìžˆìœ¼ë©´ fpí¬ì¸í„°ë¥¼ [SectionName]ì— ìœ„ì¹˜ì‹œí‚¤ê³  ë°˜ë³µë¬¸ ì¢…ë£Œ
         if (strncmp(SectionName.c_str(), buf, SectionName.length()) == 0)
         {
             last_seek = ftell(fp);
@@ -62,21 +62,21 @@ int Config::findSection(string Section)
 
 char* Config::nextItem()
 {
-    //fp´Â °Ë»öµÈ sectionÀÇ À§Ä¡ºÎÅÍ ½ÃÀÛ
+    //fpëŠ” ê²€ìƒ‰ëœ sectionì˜ ìœ„ì¹˜ë¶€í„° ì‹œìž‘
     char buf[BUF_LEN];
     while(1)
     {
-        //µ¥ÀÌÅÍ°¡ ¾øÀ¸¸é NULL ¹ÝÈ¯
+        //ë°ì´í„°ê°€ ì—†ìœ¼ë©´ NULL ë°˜í™˜
         if(fgets(buf, BUF_LEN-1, fp) == NULL)
             return NULL;
-        //confÆÄÀÏÀÌ ÁÖ¼®ÀÌ ¾Æ´Ï¸é
+        //confíŒŒì¼ì´ ì£¼ì„ì´ ì•„ë‹ˆë©´
         if(buf[0] != '#')
         {
-            //buf°¡ = ÀÌ¸é ¹Ýº¹¹® Á¾·á
+            //bufê°€ = ì´ë©´ ë°˜ë³µë¬¸ ì¢…ë£Œ
             if (strstr(buf, "=")) break;
         }
         }
-        //´ÙÀ½ µ¥ÀÌÅÍ°¡ ´Ù¸¥ ¼½¼ÇÀÌ¸é...
+        //ë‹¤ìŒ ë°ì´í„°ê°€ ë‹¤ë¥¸ ì„¹ì…˜ì´ë©´...
         if(buf[0] == NEXTSECTION)
         return NULL;
     Split(buf);
@@ -84,7 +84,7 @@ char* Config::nextItem()
 }
 char* Config::getValue(string Section, const char *KeyName)
 {
-    rewind(fp); //fpÆ÷ÀÎÅÍ¸¦ ÆÄÀÏÀÇ ½ÃÀÛÁ¡À¸·Î ¿Å±è.
+    rewind(fp); //fpí¬ì¸í„°ë¥¼ íŒŒì¼ì˜ ì‹œìž‘ì ìœ¼ë¡œ ì˜®ê¹€.
     char buf[BUF_LEN];
     int NameLen = strlen(KeyName);
     string SectionName;
@@ -123,7 +123,7 @@ int get_valueNUM(string fileName, string sectionName, string keyName)
     Config *agentCfg = new Config();
     if (agentCfg->openCfg(fileName.c_str()) == false)
     {
-        perror("Error");    //errorÃâ·Â
+        perror("Error");    //errorì¶œë ¥
 
         delete agentCfg;
         return FAIL;
@@ -174,13 +174,13 @@ int main()
     rtv = agentCfg->openCfg("./config.conf");
     if (rtv == -1)
     {
-        perror("Error");    //errorÃâ·Â
+        perror("Error");    //errorì¶œë ¥
         return 0;
     }
     
     printf("|%s of [%s]=%s|\n", keyName.c_str(), sectionName.c_str(), agentCfg->getValue(sectionName, keyName.c_str()));
 
-    rtv = agentCfg->findSection("thread count");    //section °Ë»ç
+    rtv = agentCfg->findSection("thread count");    //section ê²€ì‚¬
     if (!rtv)
     {
         return 1;

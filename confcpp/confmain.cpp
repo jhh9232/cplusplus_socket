@@ -2,13 +2,6 @@
 #include "semaphoreTask.h"
 int main()
 {
-    sockDatas.push({0, 0, "tmp", ""});
-    pthread_t recvth;
-    int rchk = pthread_create(&recvth, NULL, THREAD_recvdata, NULL);
-    if(rchk < 0)
-    {
-        perror("recv thread error\n");
-    }
     string fileName = "./config.conf";
     string sectionName = "thread count";
     string keyName = "count";
@@ -18,6 +11,16 @@ int main()
         return 0;
     
     cout << "===================================================" << endl;
+    
+	//ì†Œì¼“ ì—°ê²° í•¨ìˆ˜ - ì—†ìœ¼ë©´ return 0 í›„ ì¢…ë£Œ
+
+	//ì†Œì¼“ ì „ì†¡ ì“°ë ˆë“œ ìƒì„±
+	pthread_t recvth;
+    int rchk = pthread_create(&recvth, NULL, THREAD_recvdata, NULL);
+    if(rchk < 0)
+    {
+        perror("recv thread error\n");
+    }
 
     vector<pthread_t> threads;
     vector<unsigned int> facs;
@@ -30,15 +33,15 @@ int main()
     sem_init(&semaphore, 0, 1); //return : 0 -> success, others -> fail
 
     cout << "Semaphore test Start!" << endl;
-    //½º·¹µå »ý¼º
+    //ìŠ¤ë ˆë“œ ìƒì„±
     for(int i=0; i < tsize; i++)
         pthread_create(&threads[i], NULL, THREAD_createstr, (void*)&facs[i]);
 
-    //½º·¹µå Á¶ÀÎ
+    //ìŠ¤ë ˆë“œ ì¡°ì¸
     for(int i=0; i < tsize; i++)
 	    pthread_join(threads[i], NULL);
 
-	
+	//ìŠ¤ë ˆë“œ ì™„ì „ì¢…ë£Œ
 	CREATE_EXIT = true;
 
 	cout << "All Thread ended" << endl;
@@ -47,10 +50,9 @@ int main()
 
 	
 	pthread_cond_t *recond = get_cond();
-	cout << recond << endl;
-	pthread_cond_signal(recond);
+	pthread_cond_signal(recond);	//ëŒ€ê¸°ìƒíƒœì¤‘ì¸ signal ì²˜ë¦¬
 
-	pthread_join(recvth, NULL);	//pthreadjoinÀÇ ¹«ÇÑ´ë±â ÇØ°á
+	pthread_join(recvth, NULL);	//pthreadjoinì˜ ë¬´í•œëŒ€ê¸° í•´ê²°
 
 	return 0;
 }
