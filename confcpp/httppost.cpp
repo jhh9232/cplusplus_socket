@@ -30,7 +30,6 @@ int PostData(const char *hname, const char *page, const char *poststr)
 	char **pptr;
 	//*******************************************************
 
-	char str[50];
 	struct hostent *hptr;
 	if ((hptr = gethostbyname(hname)) == NULL) {
 		fprintf(stderr, " gethostbyname error for host: %s: %s",
@@ -52,7 +51,7 @@ int PostData(const char *hname, const char *page, const char *poststr)
 	bzero(&servaddr, sizeof(servaddr));
 	servaddr.sin_family = AF_INET;
 	servaddr.sin_port = htons(80);
-	inet_pton(AF_INET, str, &servaddr.sin_addr);
+	inet_pton(AF_INET, hname, &servaddr.sin_addr);
 
 	connect(sockfd, (SA *) & servaddr, sizeof(servaddr));
 	process_http(sockfd, hname, page, poststr);

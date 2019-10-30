@@ -33,6 +33,8 @@ int main()
     sem_init(&semaphore, 0, 1); //return : 0 -> success, others -> fail
 
     cout << "Semaphore test Start!" << endl;
+	pthread_create(&limitth, NULL, THREAD_limittime, NULL);
+	pthread_detach(limitth);
     //스레드 생성
     for(int i=0; i < tsize; i++)
         pthread_create(&threads[i], NULL, THREAD_createstr, (void*)&facs[i]);
@@ -48,6 +50,11 @@ int main()
 
 	sem_destroy(&semaphore);
 
+	
+	if(!timeStatus)
+	{
+		pthread_cancel(limitth);
+	}
 	
 	pthread_cond_t *recond = get_cond();
 	pthread_cond_signal(recond);	//대기상태중인 signal 처리

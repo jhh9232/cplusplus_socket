@@ -20,16 +20,20 @@ struct ThreadData
 extern sem_t semaphore;
 extern queue<JsonDatas> sockDatas;
 extern int seque;
+extern int timeStatus;
 extern int CREATE_EXIT;
 extern int totaltime;
 
 extern struct sockaddr_in server_addr;
 extern int SockStat;
 
+extern pthread_t limitth;
+
 void print_queue(queue<string>&);
 void ClearQueue();
 pthread_cond_t* get_cond();
 
+void* THREAD_limittime(void *);
 void* THREAD_createstr(void*);
 void* THREAD_recvdata(void *);
 

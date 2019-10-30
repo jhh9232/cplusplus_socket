@@ -12,15 +12,14 @@ const int RANDTIME = 10000;   //5000ms
 sem_t semaphore;
 queue<JsonDatas> sockDatas;
 int seque = 0;
+int timeStatus = false;
 
 int CREATE_EXIT = false;
-
-int totaltime = 0;
 
 struct sockaddr_in server_addr;
 int SockStat;
 
-
+pthread_t limitth;
 pthread_mutex_t remutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t recond = PTHREAD_COND_INITIALIZER;
 
@@ -48,23 +47,32 @@ void ClearQueue()
 
 int num = 2;
 
+//단순하게 MAXTIME초 대기하는 함수.
+void* THREAD_limittime(void* arg)
+{
+	WAITTIME(MAXTIME);
+	sem_wait(&semaphore);
+	timeStatus = true;
+	sem_post(&semaphore);
+	return NULL;
+}
+
 void* THREAD_createstr(void* arg)
-{   
+{
     int n = *(int *)arg;
     unsigned int *mystate = (unsigned int *)arg;
     cout << "n : " << n << endl;
     cout << getpid() << endl;
     cout << pthread_self() << endl;
     *mystate = time(NULL) ^ getpid() ^ pthread_self();
-    for(int i = 0; true; i++)  //지금은 3번반복이지만 나중에는 무한반복 예정.
+    for(int i = 0; i < 10; i++)  //지금은 3번반복이지만 나중에는 무한반복 예정.
     {
-        int rantime = rand_r(mystate) % (RANDTIME - 999);	//0~9000초까지
+        int rantime = rand_r(mystate) % (RANDTIME - 999) + 1000;	//0~9000초까지
         cout << "Thread " << n << " sleep time : " << rantime << endl;
-        WAITTIME(rantime + 1000); //rantime sec만큼 대기
+        WAITTIME(rantime); //rantime sec만큼 대기
 		sem_wait(&semaphore);
 		
         //LOCK
-        totaltime += rantime;
         JsonDatas tmpd = {
             .id = ++seque,
             .threadID = pthread_self(),
@@ -73,10 +81,21 @@ void* THREAD_createstr(void* arg)
         };
         sockDatas.push(tmpd);
         cout << "Thread " << n << " create string, size = " << sockDatas.size() << endl;
-        if(sockDatas.size() > QSIZE || totaltime >= MAXTIME)
+        if(timeStatus)
+		{
+			pthread_cond_signal(&recond);
+			timeStatus = false;
+			pthread_create(&limitth, NULL, THREAD_limittime, NULL);
+			pthread_detach(limitth);
+		}
+		else if(sockDatas.size() > QSIZE)
         {
-            totaltime = 0;
             pthread_cond_signal(&recond);
+			pthread_cancel(limitth);
+			WAITTIME(500);
+			pthread_create(&limitth, NULL, THREAD_limittime, NULL);
+			pthread_detach(limitth);
+
         }
         else
         {
@@ -86,7 +105,7 @@ void* THREAD_createstr(void* arg)
 
 		WAITTIME(200);
     }
-    cout << "Thread " << n << " total time : " << totaltime << endl;
+    cout << "Thread " << n << " Finished..." << endl;
     return NULL;
 }
 
@@ -97,7 +116,12 @@ void* THREAD_recvdata(void* arg)
         cout << "========= !!WAIT START!! =========" << endl;;
         pthread_cond_wait(&recond, &remutex);
         cout << "=========== RECEIVE!!! ===========" << endl;
-        queue<JsonDatas> temp = sockDatas;
+		if(sockDatas.empty())
+		{
+			sem_post(&semaphore);
+			continue;
+		}
+		queue<JsonDatas> temp = sockDatas;
         ClearQueue();
         sem_post(&semaphore);
         string Jstr = toJSON(&temp);
@@ -106,6 +130,7 @@ void* THREAD_recvdata(void* arg)
     }
 	pthread_mutex_destroy(&remutex);
 	pthread_cond_destroy(&recond);
+	printf("exit\n");
     return NULL;
 }
 
