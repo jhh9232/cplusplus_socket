@@ -3,6 +3,8 @@
 
 extern int h_errno;
 
+
+//프로토콜 체계를 설정하는 부분은 PF로 시작하는 상수를 사용하고, 주소 체계를 설정하는 부분은 AF로 시작하는 상수를  사용하는 것이 좋습니다.
 ssize_t process_http(int sockfd, const char *host, const char *page, const char *poststr)
 {
 	char sendline[MAXLINE + 1], recvline[MAXLINE + 1];
