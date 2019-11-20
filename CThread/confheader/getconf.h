@@ -5,6 +5,7 @@
 #include <sys/types.h>
 
 #define NEXTSECTION '['
+#define NOTHREAD -1
 
 class Config
 {

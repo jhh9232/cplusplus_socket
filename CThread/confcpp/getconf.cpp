@@ -1,4 +1,4 @@
-#include "getconf.h"
+#include "../confheader/getconf.h"
 
 const char *token = "=";
 
@@ -86,7 +86,7 @@ char* Config::getValue(string Section, const char *KeyName)
 {
     rewind(fp); //fp포인터를 파일의 시작점으로 옮김.
     char buf[BUF_LEN];
-    int NameLen = strlen(KeyName);
+    int NameLen = (int)strlen(KeyName);
     string SectionName;
     SectionName = "["+Section+"]";
     value[0] = null;

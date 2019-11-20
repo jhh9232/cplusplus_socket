@@ -1,7 +1,5 @@
-#include "common.h"
-#include "httppost.h"
-
-extern int h_errno;
+#include "../confheader/common.h"
+#include "../confheader/httppost.h"
 
 
 //프로토콜 체계를 설정하는 부분은 PF로 시작하는 상수를 사용하고, 주소 체계를 설정하는 부분은 AF로 시작하는 상수를  사용하는 것이 좋습니다.
@@ -34,8 +32,8 @@ int PostData(const char *hname, const char *page, const char *poststr)
 
 	struct hostent *hptr;
 	if ((hptr = gethostbyname(hname)) == NULL) {
-		fprintf(stderr, " gethostbyname error for host: %s: %s",
-			hname, hstrerror(h_errno));
+		fprintf(stderr, " gethostbyname error for host: %s",
+			hname);
 		return false;
 	}
 	//printf("hostname: %s\n", hptr->h_name);

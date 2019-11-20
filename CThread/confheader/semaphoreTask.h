@@ -6,6 +6,8 @@
 #include <vector>
 #include <queue>
 
+#define TIMENULL 0
+
 typedef struct ThreadData JsonDatas;
 
 struct ThreadData
@@ -18,30 +20,18 @@ struct ThreadData
 
 
 extern sem_t semaphore;
+extern sem_t timelock;
 extern queue<JsonDatas> sockDatas;
 extern int seque;
 extern int timeStatus;
 extern int CREATE_EXIT;
-extern int totaltime;
-
-extern struct sockaddr_in server_addr;
-extern int SockStat;
-
-extern pthread_t limitth;
+extern vector<int> threadTime;
 
 void print_queue(queue<string>&);
 void ClearQueue();
 pthread_cond_t* get_cond();
 
-void* THREAD_limittime(void *);
 void* THREAD_createstr(void*);
 void* THREAD_recvdata(void *);
-
-string createString(unsigned int *);
-string get_curtime();
-string toJSON(queue<JsonDatas>*);
-string strtoJson(string, string, int, int);
-string appJson(string, string, int);
-
 
 #endif

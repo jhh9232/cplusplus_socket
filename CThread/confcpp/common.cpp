@@ -1,4 +1,4 @@
-#include "common.h"
+#include "../confheader/common.h"
 int WAITTIME(int millisec)
 {
 	millisec--;

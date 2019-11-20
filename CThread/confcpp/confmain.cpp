@@ -1,13 +1,13 @@
-#include "getconf.h"
-#include "semaphoreTask.h"
+#include "../confheader/getconf.h"
+#include "../confheader/semaphoreTask.h"
 int main()
 {
-    string fileName = "./config.conf";
+    string fileName = "../../../confcpp/config.conf";
     string sectionName = "thread count";
     string keyName = "count";
 
-    int tsize = FAIL;
-    if ((tsize = get_valueNUM(fileName, sectionName, keyName)) == FAIL)
+    int tsize = NOTHREAD;
+    if ((tsize = get_valueNUM(fileName, sectionName, keyName)) == NOTHREAD)
         return 0;
     
     cout << "===================================================" << endl;
@@ -28,13 +28,13 @@ int main()
     {
         threads.push_back(EMPTY);
         facs.push_back((unsigned int)tn);
+		threadTime.push_back(TIMENULL);
     }
 
     sem_init(&semaphore, 0, 1); //return : 0 -> success, others -> fail
+	sem_init(&timelock, 0, 1);
 
     cout << "Semaphore test Start!" << endl;
-	pthread_create(&limitth, NULL, THREAD_limittime, NULL);
-	pthread_detach(limitth);
     //스레드 생성
     for(int i=0; i < tsize; i++)
         pthread_create(&threads[i], NULL, THREAD_createstr, (void*)&facs[i]);
@@ -47,19 +47,13 @@ int main()
 	CREATE_EXIT = true;
 
 	cout << "All Thread ended" << endl;
-
-	sem_destroy(&semaphore);
-
-	
-	if(!timeStatus)
-	{
-		pthread_cancel(limitth);
-	}
 	
 	pthread_cond_t *recond = get_cond();
 	pthread_cond_signal(recond);	//대기상태중인 signal 처리
 
 	pthread_join(recvth, NULL);	//pthreadjoin의 무한대기 해결
 
+	sem_destroy(&semaphore);
+	sem_destroy(&timelock);
 	return 0;
 }

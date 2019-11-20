@@ -13,8 +13,6 @@
 #define MAXLINE 8192
 #define MAXSUB  200
 
-extern int h_errno;
-
 ssize_t process_http(int , const char *, const char *, const char *);
 
 int PostData(const char *, const char *, const char *);
